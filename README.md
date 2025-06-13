@@ -5,6 +5,20 @@
 
 This script helps you install and run the *Star Citizen* launcher on Linux using Proton via Steam.
 
+## Why Use Steam?
+
+Running Star Citizen through Steam offers several benefits on Linux:
+
+- **Proton Integration**: Steam provides first-class Proton support, allowing compatibility layers to run Windows games like Star Citizen smoothly.
+- **Shader Cache Management**: Steam handles and caches compiled Vulkan shaders per user and game, reducing stutter and improving performance over time.
+- **Isolated Game Data**: Steam keeps game files, Proton prefixes, and shader data organized within a predictable directory structure, simplifying troubleshooting and backups.
+- **Proton Updates and Overrides**: You can easily switch or update your Proton version using Steam’s UI or ProtonQT, without affecting other games or applications.
+- **Launch Scripts and Compatibility**: Steam makes it easy to pass arguments, use launch wrappers (like `sc-launcher.sh`), and enforce compatibility settings.
+- **Library Management**: Steam allows custom installation paths and library folders, which is helpful for managing the large disk space Star Citizen requires.
+- **Input and Overlay Features**: Steam Input can be used to configure and remap gamepads or HOTAS setups, and the Steam overlay can provide useful in-game tools, like video recording, screenshots, chat, voip.
+
+**In short:** Steam acts as a convenient and flexible launcher layer, helping to manage the complexity of running a Windows-only game like Star Citizen on Linux with Proton.
+
 ## Requirements
 
 - Proton (preferably Proton GE or Proton CachyOS)
