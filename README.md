@@ -53,19 +53,24 @@ Running Star Citizen through Steam offers several benefits on Linux:
 
 - Locate the new shortcut in your Steam Library (name it something like "Star Citizen Launcher").
 - Open **Properties**:
-  - Under **Shortcut**, for the initial install/update **only**, set the **Launch Options** to the exact filename of the installer, for instance:
+  - Under **Shortcut**, for the initial install/update **only**, set the **Launch Options** to the exact filename of the installer, for instance (the " does matter):
     ```
-    RSI Launcher-Setup-2.4.0.exe
+    "RSI Launcher-Setup-2.4.0.exe"
     ```
   - Under **Compatibility**, check:
     > **Force the use of a specific Steam Play compatibility tool**  
     and select the Proton version you installed earlier (GE or CachyOS).
+    
+  - Pictured:
+    ![steam-client-game-properies](/home/oz/Documents/Star Citizen/sc-launcher/media/steam-client-game-properies.png) 
 
 ### 5. Launch the Installer
 
 - Start the game from Steam.
 - The RSI installer will launch. When asked for installation location:
   - Choose `Z:\` → navigate to `/` → go to the folder containing `sc-launcher.sh` → select `Roberts Space Industries`.
+  - Pictured
+    ![launcher-install-path](/home/oz/Documents/Star Citizen/sc-launcher/media/launcher-install-path.png)
 
 ### 6. Final Configuration
 
