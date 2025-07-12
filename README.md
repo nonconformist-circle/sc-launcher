@@ -78,7 +78,7 @@ Running Star Citizen through Steam offers several benefits on Linux:
 - Go back to Steam → **Properties** → **Shortcut** → **clear the Launch Options**.
 - Launch the game again via Steam.
 
-### 7. Upaating installer (If the installer does not load a newer versaion automatically)
+### 7. Upadating installer (If the installer does not load a newer versaion automatically)
 - Download the RSI installer (`RSI Launcher-Setup-*.exe`) from the official RSI homepage into this subfolder (`Roberts Space Industries`).
 - repeat steps 4 - 6.
 
