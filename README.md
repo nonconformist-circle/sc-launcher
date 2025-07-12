@@ -62,7 +62,7 @@ Running Star Citizen through Steam offers several benefits on Linux:
     and select the Proton version you installed earlier (GE or CachyOS).
     
   - Pictured:
-    ![steam-client-game-properies](/home/oz/Documents/Star Citizen/sc-launcher/media/steam-client-game-properies.png) 
+    ![steam-client-game-properies](media/steam-client-game-properies.png) 
 
 ### 5. Launch the Installer
 
@@ -70,7 +70,7 @@ Running Star Citizen through Steam offers several benefits on Linux:
 - The RSI installer will launch. When asked for installation location:
   - Choose `Z:\` → navigate to `/` → go to the folder containing `sc-launcher.sh` → select `Roberts Space Industries`.
   - Pictured
-    ![launcher-install-path](/home/oz/Documents/Star Citizen/sc-launcher/media/launcher-install-path.png)
+    ![launcher-install-path](media/launcher-install-path.png)
 
 ### 6. Final Configuration
 
