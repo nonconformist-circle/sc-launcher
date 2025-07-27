@@ -1,91 +1,132 @@
 #!/bin/bash
+## =========================================================================================
+## 
+## * This script works with ProtonQT/ProtonUP, and does not always work with ProtonPlus 
+## because ProtonPlus does not follow Steam naming conventions that this script relies on.
+##
+## * For custom setting place a file named sc-launcher.env in same directory as this script.
+## see sc-launcher.env.template
+##
+## =========================================================================================
+wdir=$(dirname $(readlink -f $0))
 
 # Settings
-STEAM_CLIENT_APP_ID=${STEAM_COMPAT_TRANSCODED_MEDIA_PATH##*/}
-GAME_INSTALLATION_FOLDER=/mnt/games/star-citizen/
-RSI_INSTALLER=${1}
+STEAM_CLIENT_APP_ID=${STEAM_CLIENT_APP_ID:-"${STEAM_COMPAT_TRANSCODED_MEDIA_PATH##*/}"}
 RSI_LAUNCHER="RSI Launcher.exe"
-RSI_LAUNCHER_PATH="RSI Launcher"
 STEAM_CLIENT_CONFIG=$HOME/.steam/steam/config/config.vdf
+GAME_INSTALLATION_FOLDER=${wdir}
 
-# get Proton you set in Steam (or ProtonQT set)
-PROTON_FLAVOR=$(grep -A3 $STEAM_CLIENT_APP_ID $STEAM_CLIENT_CONFIG | grep name | grep -ioE '[^"]*proton.*[^"]+')
-PROTON_PATH="$(readlink -f $HOME/.steam/root/compatibilitytools.d/$PROTON_FLAVOR)" 
-if [ ! -z "${PROTON_FLAVOR}" ]; then
-  PROTON_BIN="${PROTON_PATH}/proton"
-else
-  PROTON_BIN="proton"
+## =========================================================================================
+##  Load custom environment
+## =========================================================================================
+[ -f ${wdir}/sc-launcher.env ] && source ${wdir}/sc-launcher.env
+
+if [ -z "${STEAM_COMPAT_TRANSCODED_MEDIA_PATH}" ] && [ -z "${STEAM_CLIENT_APP_ID}" ]; then
+  dump_env
+  echo "ERROR: Could not determine STEAM_CLIENT_APP_ID. Exiting." | tee >&2
+  exit 1
 fi
-PROTON_PREFIX_VERSION=$(grep -roE 'CURRENT_PREFIX_VERSION="[^"]+"' ${PROTON_BIN} | grep -oE '[^"]+' | tail -n1)
-PROTON_VERSION=$(echo "${PROTON_PREFIX_VERSION}" | grep -oE '[0-9]+' | head -n1)
 
-# Proton prefix location 
-export STEAM_COMPAT_CLIENT_INSTALL_PATH="${HOME}/.steam/debian-installation"
-export STEAM_COMPAT_DATA_PATH="${STEAM_COMPAT_CLIENT_INSTALL_PATH}/steamapps/compatdata/${STEAM_CLIENT_APP_ID}/"
-export WINEPREFIX="${STEAM_COMPAT_DATA_PATH}/pfx"
-
-# Proton performance env vars
-case "$PROTON_VERSION" in
-#  9)
-#    export PROTON_NO_ESYNC=1
-#    export PROTON_NO_FSYNC=1
-#    export DXVK_ASYNC=1
-#    ;;
-  *)
-    unset PROTON_NO_ESYNC
-    unset PROTON_NO_FSYNC
-    unset DXVK_ASYNC
-    ;;
-esac
-    
-# HUD for debugging and gpu info (for ingame FPS use Steam client settings)
-#export DXVK_HUD=0 #Options: api,fps,frametime,devinfo,gpuload,version
-#export DXVK_HUD_FONT_SCALE=0.5
-#export DXVK_HUD_POSITION=top-left #Options: top-left (default), top-right, bottom-left, bottom-right
-
-# Logging
-export DXVK_LOG_LEVEL=debug
-export PROTON_LOG=1
-
-# little debug
-echo -e "
+## =========================================================================================
+## Functions
+## =========================================================================================
+dump_env() {
+  # Little debug (use journalctl -f)
+  echo -e "
 # [ ------------------- BOF DEBUG ------------------- ]
 
-RSI_INSTALLER="${RSI_INSTALLER}"
+# Launcher settings
+RSI_INSTALLER_PATH="${RSI_INSTALLER_PATH}"
 RSI_LAUNCHER="${RSI_LAUNCHER}"
-RSI_LAUNCHER_PATH="${RSI_LAUNCHER_PATH}"
 
+# Steam environment
 STEAM_CLIENT_APP_ID=${STEAM_CLIENT_APP_ID}
+STEAM_COMPAT_DATA_PATH=${STEAM_COMPAT_DATA_PATH}
+STEAM_COMPAT_CLIENT_INSTALL_PATH=${STEAM_COMPAT_CLIENT_INSTALL_PATH}
+STEAM_COMPAT_TRANSCODED_MEDIA_PATH=${STEAM_COMPAT_TRANSCODED_MEDIA_PATH}
+
+# Proton environment
 PROTON_FLAVOR=${PROTON_FLAVOR}
 PROTON_PATH=${PROTON_PATH}
-PROTON_BIN=${PROTON_BIN}
 PROTON_PREFIX_VERSION=${PROTON_PREFIX_VERSION}
 PROTON_VERSION=${PROTON_VERSION}
+WINEPREFIX=${WINEPREFIX}
 
-PROTON_NO_ESYNC=${PROTON_NO_ESYNC}
-PROTON_NO_FSYNC=${PROTON_NO_FSYNC}
-DXVK_ASYNC=${DXVK_ASYNC}
+# App
+APP_PATH="${APP_PATH}"
 
 # [ ------------------- EOF DEBUG ------------------- ]
-" >&2
+" | tee >&2
+}
 
-# Ensure paths
-mkdir -p ${HOME}/.config/protonfixes ${STEAM_COMPAT_DATA_PATH}
+version_to_int() {
+  IFS=. read -r major minor patch <<< "$1"
+  major=${major:-0}
+  minor=${minor:-0}
+  patch=${patch:-0}
+  echo $(( major * 10000 + minor * 100 + patch ))
+}
 
-# Cleanup
-rm ${STEAM_COMPAT_DATA_PATH}/version ${STEAM_COMPAT_DATA_PATH}/config_info
+## =========================================================================================
+## Steam libs and Proton prefix location
+## =========================================================================================
+export STEAM_COMPAT_CLIENT_INSTALL_PATH="${HOME}/.steam/debian-installation"
+export STEAM_COMPAT_DATA_PATH=${GAME_INSTALLATION_FOLDER:-"${STEAM_COMPAT_CLIENT_INSTALL_PATH}/steamapps/compatdata/${STEAM_CLIENT_APP_ID}"}
+export WINEPREFIX="${STEAM_COMPAT_DATA_PATH}/pfx"
 
-# Navigate to RSI Launcher directory
-cd "${GAME_INSTALLATION_FOLDER}/Roberts Space Industries/"
+if [[ ! "${@}" =~ noupgrade ]]; then
+  set -x
+  currentInstallerVersion=$(find ${STEAM_COMPAT_DATA_PATH} -type f -name 'RSI Launcher-Setup*.exe' | grep -oE "[0-9]\.[0-9]\.[0-9]" | sort -h | tail -n1)
+  newInstallerLink=$(curl -s https://robertsspaceindustries.com/en/download | grep downloadLink | grep -oE 'https://install.robertsspaceindustries.com[^\"]+')
+  newInstallerVersion=$(echo ${newInstallerLink} | grep -oE "[0-9]\.[0-9]\.[0-9]" )
+  newInstallerExe=${newInstallerLink##*/}
+  if [ $(version_to_int "${newInstallerVersion}") -gt $(version_to_int "${currentInstallerVersion}") ]; then
+    echo "Downloading installer" | tee >&2
+    
+    RSI_INSTALLER_PATH=${STEAM_COMPAT_DATA_PATH}/$(printf '%b' "${newInstallerExe//%/\\x}")
+    curl -o "${RSI_INSTALLER_PATH}" "${newInstallerLink}"
+  fi
+fi
 
-# Optional: dummy steam_appid.txt for Steam API compatibility
-echo 480 > steam_appid.txt
-
-if [ ! -z "${RSI_INSTALLER}" ]; then
+if [ ! -z "${RSI_INSTALLER_PATH}" ]; then
   # Launch the RSI Launcher setup using Proton
-  exec "${PROTON_BIN}" run "${RSI_INSTALLER}"
+  APP_PATH=${RSI_INSTALLER_PATH}
 else
   # Launch the RSI Launcher using Proton
-  cd "${RSI_LAUNCHER_PATH}"
-  exec "${PROTON_BIN}" run "${RSI_LAUNCHER}"
+  APP_PATH=$(find ${STEAM_COMPAT_DATA_PATH} -type f -name "${RSI_LAUNCHER}")
+  if [ -z "${APP_PATH}" ]; then
+    dump_env
+    echo "ERROR: Star Citizen not yet installed. Need RSI installer file name (quoted) as parameter" >&2
+    exit 1
+  fi
 fi
+
+## =========================================================================================
+## Ensure paths
+## =========================================================================================
+mkdir -p ${HOME}/.config/protonfixes ${STEAM_COMPAT_DATA_PATH}
+
+## =========================================================================================
+## Get Proton flavor and version set in Steam
+## =========================================================================================
+PROTON_FLAVOR=$(grep -A3 $STEAM_CLIENT_APP_ID $STEAM_CLIENT_CONFIG | grep name | grep -ioE '[^"]*proton.*[^"]+')
+PROTON_PATH=$(readlink -f "$HOME/.steam/root/compatibilitytools.d/$PROTON_FLAVOR")
+if [ ! -z "${PROTON_FLAVOR}" ]; then
+  PROTON_PATH="${PROTON_PATH}/proton"
+else
+  dump_env
+  echo "ERROR: Could not determine PROTON_FLAVOR. Exiting." >&2
+  exit 1
+fi
+if declare -F proton_envs > /dev/null; then
+  PROTON_PREFIX_VERSION=$(grep -roE 'CURRENT_PREFIX_VERSION="[^"]+"' "${PROTON_PATH}" | grep -oE '[^"]+' | tail -n1)
+  PROTON_VERSION=$(echo "${PROTON_PREFIX_VERSION}" | grep -oE '[0-9]+' | head -n1)
+  proton_envs
+fi
+
+## =========================================================================================
+## Launch game
+## =========================================================================================
+dump_env
+exec "${PROTON_PATH}" run "${APP_PATH}"
+
