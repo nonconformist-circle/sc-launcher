@@ -58,6 +58,10 @@ APP_PATH=${APP_PATH}
 # Steam env
 $(env | grep -iE '(steam)')
 
+# RSI Installer
+currentInstallerVersion=${currentInstallerVersion}
+newInstallerVersion=${newInstallerVersion}
+
 # [ ------------------- EOF DEBUG ------------------- ]
 " | tee >&2
 }
@@ -78,7 +82,7 @@ get_proton_flavor() {
 }
 
 get_rsi_setup_versions() {
-  currentInstallerVersion=$(find ${STEAM_COMPAT_DATA_PATH} -type f -name 'RSI Launcher-Setup*.exe' | grep -oE "[0-9]\.[0-9]\.[0-9]" | sort -h | tail -n1)
+  currentInstallerVersion=$(grep -Po '(?<=DisplayName"="RSI Launcher )[^"]*' ${WINEPREFIX}/system.reg)
   newInstallerLink=$(curl -s https://robertsspaceindustries.com/en/download | grep downloadLink | grep -oE 'https://install.robertsspaceindustries.com[^\"]+')
   newInstallerVersion=$(echo ${newInstallerLink} | grep -oE "[0-9]\.[0-9]\.[0-9]" )
   newInstallerExe=${newInstallerLink##*/}
@@ -94,13 +98,14 @@ export WINEPREFIX="${STEAM_COMPAT_DATA_PATH}/pfx"
 if [[ ! "${@}" =~ noupgrade ]]; then
   get_rsi_setup_versions
   if [ $(version_to_int "${newInstallerVersion}") -gt $(version_to_int "${currentInstallerVersion}") ]; then
-    if "${STEAM_ZENITY}" --question --title="SC-Launcher.sh" --text="There is a new launcher version ${newInstallerVersion}, do you want to insall now?"; then
+    if "${STEAM_ZENITY}" --question --no-wrap --title="SC-Launcher.sh" --text="There is a new launcher version ${newInstallerVersion}, do you want to insall now?"; then
         echo "Downloading installer" | tee >&2
         RSI_INSTALLER_PATH=${STEAM_COMPAT_DATA_PATH}/$(printf '%b' "${newInstallerExe//%/\\x}")
         curl -o "${RSI_INSTALLER_PATH}" "${newInstallerLink}"
     fi
   fi
 fi
+
 
 if [ ! -z "${RSI_INSTALLER_PATH}" ]; then
   # Launch the RSI Launcher setup using Proton
@@ -136,7 +141,7 @@ fi
 if declare -F proton_envs > /dev/null; then
   PROTON_PREFIX_VERSION=$(grep -roE 'CURRENT_PREFIX_VERSION="[^"]+"' "${PROTON_PATH}" | grep -oE '[^"]+' | tail -n1)
   PROTON_VERSION=$(echo "${PROTON_PREFIX_VERSION}" | grep -oE '[0-9]+' | head -n1)
-  [ ! -z "${PROTON_VERSION}"] && proton_envs
+  proton_envs
 fi
 
 ## =========================================================================================
