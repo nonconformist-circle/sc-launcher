@@ -15,7 +15,7 @@ STEAM_CLIENT_APP_ID=${STEAM_CLIENT_APP_ID:-"${STEAM_COMPAT_DATA_PATH##*/}"}
 RSI_LAUNCHER="RSI Launcher.exe"
 STEAM_CLIENT_CONFIG=$HOME/.steam/steam/config/config.vdf
 GAME_INSTALLATION_FOLDER=${wdir}
-STEAM_ZENITY=/usr/bin/zenity
+STEAM_ZENITY=${STEAM_ZENITY:-"/usr/bin/zenity"}
 
 ## =========================================================================================
 ##  Load custom environment
