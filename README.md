@@ -1,124 +1,189 @@
-# sc-launcher
-**Play Star Citizen on Linux**
-
-## Overview
-
-* The ```sc-launcher.sh``` script helps you to install, update and run the latest *Star Citizen* setup launcher from [RSI home](https://robertsspaceindustries.com/en/download) page on Linux using Proton via Steam. Other frameworks like Lutris, Bottle, etc. are not tested and are rather not compatible.
-
-* If you are not yet a member of Star Citizen Universe, feel free to use this Referrer code: https://www.robertsspaceindustries.com/enlist?referral=STAR-K4DH-PCG3
-  You get 5000UEC and I get a small ship. Join my organisation, and I help you to get yours: https://robertsspaceindustries.com/en/orgs/NCFC
-  
-* I use Fedora as it seems to be most compatible with latest hardware. The script should run on any Linux distribution, as any extra magic is omitted.
-
-## Why Use Steam?
-
-Running Star Citizen through Steam offers several benefits on Linux:
-
-- **All your games in one place** if you - like me - do preferring Steam as your game platform, you do not need to switch between different solutions (Lutris, Bottle etc. not needed). You can check https://www.protondb.com/ for your game compatibility with Linux and tips what runner to use, or what parameters to set (Only for Steam games).
-- **Proton Integration**: Steam provides first-class Proton support, allowing compatibility layers to run Windows games like Star Citizen smoothly.
-- **Proton compatibility**: Using Wine runners you often need to create workarounds because of Anti-Cheat software, missing support for GPUs, Controllers and other hardware. Proton is usually kept wide range compatible. For now I had no issues, except one fixed by CiG few days later. In that particular case Wine had a solution a day after the game patch caused the issue. In general Wine patches are faster, no doubt. But Proton knows more common issues that are already handled before you even know them. Proton is developed by Valve (owner of Steam shop) to run on Steam Deck. Accordingly there is a much more effort to keep Proton stable and compatible.
-- **Shader Cache Management**: Steam handles and caches compiled Vulkan shaders per user and game, reducing stutter and improving performance over time.
-- **Isolated Game Data**: Steam keeps game files, Proton prefixes, and shader data organized within a predictable directory structure, simplifying troubleshooting and backups.
-- **Proton Updates and Overrides**: You can easily switch or update your Proton version using Steam’s UI or ProtonUP-QT, without affecting other games or applications.
-- **Launch Scripts and Compatibility**: Steam makes it easy to pass arguments, use launch wrappers (like `sc-launcher.sh`), and enforce compatibility settings.
-- **Library Management**: Steam allows custom installation paths and library folders, which is helpful for managing the large disk space games like Star Citizen requires.
-- **Input and Overlay Features**: Steam Input can be used to configure and remap gamepads or HOTAS setups, and the Steam overlay can provide useful in-game tools, like video recording, screenshots, chat, voip.
-
-**In short:** Steam acts as a convenient and flexible launcher layer, helping to manage the complexity of running a Windows-only game like Star Citizen on Linux with Proton.
-
-I**f you don't like to run the game via Steam and Proton**, and you want to use a wine runner, take a look at: https://github.com/starcitizen-lug/lug-helper.
-
-## Requirements
-
-- **Steam** client installed (with Proton support enabled)
-- **ProtonUP-QT** or **ProtonPlus** installed for downloading and managing Proton versions 
-  - **ProtonUP-QT** via flatpak, or https://davidotek.github.io/protonup-qt/ (in my opinion better, as covers more stable versions of proton)
-  - **ProtonPlus** via flatpak, or https://github.com/Vysp3r/ProtonPlus (in my opinion more intuitive and simple UI, but there are broken versions of Proton downloaded)
-
-- **Proton** (other than Steams default, preferably ProtonGE or Proton-CachyOS. I do prefer Proton-CachyOS, as it is faster with reactions to incompatibility. Powered by Arch Linux CachyOS).
+Got it ✅ — here’s your **polished and ready-to-paste README** with the small fixes applied (typos, grammar, Markdown spacing for collapsibles).
 
 ---
 
-## Installation Steps
+# sc-launcher
 
-### 1. Install Proton via ProtonUP-QT or ProtonPlus if not done already
+**Play Star Citizen on Linux with Steam & Proton**
 
-- Use **ProtonUP-QT** or **ProtonPlus** to download your desired Proton version:
-  - *Proton GE* is a good option. But some versions do return the wrong exit code and on exiting the game is launched again. You need to stop via Steam client then.
-  - *Proton-CachyOS* is potentially better for latest hardware. Has no issues (yet) with the exit code.
-- Use **ProtonUP-QT** or **ProtonPlus** to update your Proton version.
+## Overview
 
-### 2. Prepare Installation Directory
+The `sc-launcher.sh` script simplifies installing, and running *Star Citizen* and maintains the RSI launcher from [RSI's download page](https://robertsspaceindustries.com/en/download) on Linux, using **Proton via Steam**.
 
-- Place `sc-launcher.sh` in the directory where you want to install Star Citizen. In this directory the Proton prefix (pfx) will be created and the setup launched inside Proton (Wine) VM.
+* Other frameworks like **Lutris** or **Bottles** are not tested and are generally not compatible.
+* Prefer Wine instead of Steam/Proton? Consider [lug-helper](https://github.com/starcitizen-lug/lug-helper).
+* New to *Star Citizen*? Use my referral link to get 5000 UEC: [Join here](https://www.robertsspaceindustries.com/enlist?referral=STAR-K4DH-PCG3). You'll also get help joining my org: [NCFC](https://robertsspaceindustries.com/en/orgs/NCFC).
+* Tested on **Fedora**, but should work on most Linux distributions (no distro-specific hacks included).
 
-  - Optionally: place a `sc-launcher.env` in same directory, where you can put you proton configuration variables and functions (usually not needed).
+---
 
-- Example installation:
+## Why Use Steam?
 
-  ```bash
-  mkdir -p $HOME/Games/Star-Citizen
-  cd $HOME/Games/Star-Citizen
-  git clone https://github.com/nonconformist-circle/sc-launcher.git
-  cp sc-launcher/sc-launcher.sh .
-  chmod +x sc-launcher.sh
-  touch sc-launcher.env
-  ```
+Running *Star Citizen* through Steam on Linux has key advantages:
 
-  * You can update the script using `git pull` 
+* **Unified Library**: Keep all your games in Steam — no need to juggle Lutris, Bottles, or manual Wine setups.
+* **Proton Integration**: Valve's Proton is optimized for compatibility and stability, especially with anti-cheat and new hardware.
+* **Quick Fixes & Stability**: Wine patches may appear faster, but Proton already includes many workarounds. It's developed for Steam Deck, so stability and wide hardware support are a priority.
+* **Shader Caching**: Steam manages Vulkan shader caches per user/game, reducing stutter and improving performance.
+* **Organized Data**: Proton prefixes, game files, and shader caches live in a predictable structure.
+* **Easy Proton Management**: Switch Proton builds easily using Steam's UI; update Proton builds using tools like **ProtonUP-QT** or **ProtonPlus**.
+* **Steam Features**: Enjoy Steam Input for controllers/HOTAS, the overlay for screenshots/chat/recording, and custom artwork for your library.
+
+👉 **TL;DR:** Steam acts as a powerful and user-friendly management layer for running a Windows-only game like *Star Citizen* on Linux. No insider knowledge needed.
+
+---
+
+## Requirements
+
+* **Steam client** with Proton support enabled.
+* **ProtonUP-QT** or **ProtonPlus** to install/manage Proton versions:
+
+  * [ProtonUP-QT](https://davidotek.github.io/protonup-qt/) (better coverage of stable builds).
+  * [ProtonPlus](https://github.com/Vysp3r/ProtonPlus) (simpler UI, but sometimes ships broken builds).
+* **Proton build/runner for Star Citizen** (Steam's default Proton/Experimental is unreliable):
+
+  * *Proton-GE* – widely used, but some builds return wrong exit codes and cause the RSI Launcher to restart on exit. Workaround: use the "Stop" button in Steam client.
+  * *Proton-CachyOS* – optimized for modern hardware, fewer quirks. Works great — my favorite.
+  * *Proton-EM* – tested, does not work for now.
+  * *Proton-Tgk* – tested, does not work for now.
+  * *Luxtorpeda* – no support for Star Citizen.
+  * *Others* – only for old hardware, not tested.
+
+---
+
+## Installation
+
+### 1. Install Proton
+
+Use **ProtonUP-QT** or **ProtonPlus** to download and update your preferred Proton build (GE or CachyOS).
+
+### 2. Prepare Directory
+
+Choose an installation directory and place the script there:
+
+```bash
+mkdir -p $HOME/Games/Star-Citizen
+cd $HOME/Games/Star-Citizen
+git clone https://github.com/nonconformist-circle/sc-launcher.git
+cp sc-launcher/sc-launcher.sh .
+chmod +x sc-launcher.sh
+touch sc-launcher.env   # optional, for custom Proton variables
+```
+
+Updating sc-launcher is just:
+
+```bash
+cd $HOME/Games/Star-Citizen/sc-launcher/
+git pull
+cp sc-launcher.sh ../sc-launcher.sh
+```
+
+*(Manual updates are intentional — you should always know what comes from a repo for security reasons.)*
 
 ### 3. Add to Steam
 
-- Open Steam and go to:  
-  **"Add a Game" → "Add a Non-Steam Game" → "Browse"**  
-  Select the `sc-launcher.sh` script, eg. `$HOME/Games/Star-Citizen/sc-launcher.sh`
-- On start the script will automatically check If you don't
+In Steam:
+**Add a Game → Add a Non-Steam Game → Browse**
+Select `sc-launcher.sh`.
 
-### 4. Configure Steam Shortcut
+### 4. Configure Shortcut
 
-- Locate the new shortcut in your Steam Library (name it something like "Star Citizen Launcher").
-- Open **Properties**:
-  - Under **Shortcut** point to the `sc-launcher.sh`
-  - Under **Compatibility**, check:
-    > **Force the use of a specific Steam Play compatibility tool**  
-    and select the Proton version you installed earlier (GE or CachyOS).
-    
-  - Pictured example:
-    ![steam-client-game-properies-shortcut](media/steam-client-game-properies-shortcut.png)
-    
-  - ![](media/steam-client-game-properies-compat.png) 
-  
-  - You can add logos and backgrounds to Steam for Star Citizen to make it look like other games on Steam. For art work take a look at:
-  
-    - https://robertsspaceindustries.com/en/fankit 
-  
+* Rename it (e.g., *Star Citizen Launcher*).
+* In **Properties → Compatibility**, enable:
 
+  > Force the use of a specific Steam Play compatibility tool
+  > Select your Proton build (GE or CachyOS).
 
+Pictured example:
 
-### 5. Launch the Installer
+![Steam shortcut properties window](media/steam-client-game-properies-shortcut.png)
+![Steam compatibility settings](media/steam-client-game-properies-compat.png)
 
-- Start the game from Steam.
-- First start (as any update) may take a while as the latest `RSI Launcher-Setup-X.X.X.exe` is downloaded to the game installation folder.
-- The RSI installer will launch. When asked for installation location:
-  - You can use the suggested path. This would end up in `/home/<your-profile/Games/Star-Citizen/`
-  - Example picture: 
-    ![launcher-install](media/launcher-install.png)
-  - **Optional** you can choose `Z:\` → navigate to `/` → go to the folder containing `sc-launcher.sh` → "Make New Folder":  `Roberts Space Industries` or what ever you like
-  - Pictured
-    ![launcher-install-path](media/launcher-install-path.png)
+You can also add logos/backgrounds from the [RSI Fan Kit](https://robertsspaceindustries.com/en/fankit).
 
-### 6. Final Configuration
+### 5. Launch Installer
 
-- After the installation completes make sure checkbox "Run RSI Launcher" **is unchecked** and finish the setup. If you don't the game will be launched without the Steam overlay.
-  ![launcher-install-run](media/launcher-install-run.png)
-- Launch the game again via Steam.
+* Start via Steam.
+* The script will download the latest `RSI Launcher-Setup-X.X.X.exe`.
+* Run the installer and choose the installation path:
 
+  * Default is fine (`C:\Program Files\Roberts Space Industries\RSI Launcher` on your host machine results in `$HOME/Games/Star-Citizen/pfx/drive_c/Program\ Files/Roberts\ Space\ Industries/RSI Launcher`).
+  * Alternatively, if you already have the game installed somewhere, choose `Z:\` → navigate to your game folder → create a `Roberts Space Industries` subfolder if not exists, parallel to the `StarCitizen` folder (which is the default structure).
 
+    * If you do this, remember to change the Default Library path in RSI Launcher via **Settings → Storage**. Otherwise, the launcher will install the game in `C:\Program Files\Roberts Space Industries\StarCitizen` by default (=`$HOME/Games/Star-Citizen/pfx/drive_c/Program\ Files/Roberts\ Space\ Industries/StarCitizen`).
+
+Example pictures:
+
+![RSI installer window](media/launcher-install.png)
+![RSI install path dialog](media/launcher-install-path.png)
+
+### 6. Final Setup
+
+* On the final page of the RSI installer, **uncheck** “Run RSI Launcher”.
+
+![RSI installer final page with run option](media/launcher-install-run.png)
+
+* Restart from Steam to ensure the overlay works.
 
 ---
 
 ## Notes
 
-- When the game starts, you may see a warning about an untested Windows version — this is expected. Just click OK and continue.
-- The `sc-launcher.sh` will check for new RSI Launcher each time. If there is one newer it will download it and run instate of the game. Repeat steps 5 - 6. On next launch the game will start again. If you rather like to control the launcher version by your self, type ```noupgrade``` as "Launch options" under Game Settings (see 4. first figure).
-- Enjoy playing Star Citizen on Linux!
+* An “unsupported Windows version” warning may appear — click OK, we know there is no official support.
+* `sc-launcher.sh` checks for new RSI Launcher versions at each run. If found, it asks you if you want to update before launching.
+* To disable auto-updates, add `noupgrade` in Steam launch options.
+* First startup may take longer due to downloads in background.
+
+---
+
+## Troubleshooting
+
+The `sc-launcher.sh` makes little noise in the log. It dumps certain envs that can help. Use `journalctl -u steam` to check logs for errors. Best practice is to start `journalctl -fu steam` in a terminal, launch the game via Steam, and observe the log output. LLMs can help to identify issues.
+
+<details>
+<summary>Click to expand common issues & fixes</summary>
+
+### 🚫 RSI Launcher won't start / crashes immediately
+
+* Verify Proton build (GE or CachyOS) is installed/selected.
+* Avoid mixing Proton with external Wine setups. This makes the prefix (`/pfx` in your Star Citizen game folder) unusable. Only chance to repair: delete the `pfx` folder, then restart the game.
+
+  * ⚠️ This means all game files are lost if installed inside the prefix (default). Back up user files from the game installation folder first. In our example installation, that would be:
+
+    * back up:
+    
+      * `$HOME/Games/Star-Citizen/pfx/drive_c/Program\ Files/Roberts\ Space\ Industries/StarCitizen/LIVE/user.cfg`
+      * `$HOME/Games/Star-Citizen/pfx/drive_c/Program\ Files/Roberts\ Space\ Industries/StarCitizen/LIVE/user/client/0`
+    * delete: `$HOME/Games/Star-Citizen/pfx`
+
+### 🖥️ Game crashes on launch
+
+* Try a different Proton version.
+* Disable Steam overlay if conflicts appear.
+* Check [RSI Issue Council](https://issue-council.robertsspaceindustries.com).
+
+### 🎮 Controller / HOTAS issues
+
+* Configure through **Steam Input** (Properties → Controller).
+* If bindings reset, enable “Generic Controller Support” in Steam settings.
+
+### 🎨 Black screen or visual glitches
+
+* Update GPU drivers (latest Mesa for AMD, latest NVIDIA driver).
+* Clear Steam shader cache (`steamapps/shadercache/<AppID>`).
+
+### 🕹️ Stutter during gameplay
+
+* Normal on first run due to shader compilation.
+* Ensure shader pre-caching is enabled in Steam.
+
+### ❌ Game relaunches after quitting
+
+* Proton GE bug. Use Proton-CachyOS instead, or stop manually via Steam UI.
+
+</details>  
+
+---
+
+✨ Enjoy *Star Citizen* on Linux!
+

@@ -18,17 +18,6 @@ GAME_INSTALLATION_FOLDER=${wdir}
 STEAM_ZENITY=${STEAM_ZENITY:-"/usr/bin/zenity"}
 
 ## =========================================================================================
-##  Load custom environment
-## =========================================================================================
-[ -f ${wdir}/sc-launcher.env ] && source ${wdir}/sc-launcher.env
-
-if [[ "${SteamClientLaunch}" != "1" ]] && [ -z "${STEAM_CLIENT_APP_ID}" ]; then
-  dump_env
-  echo "ERROR: Could not determine STEAM_CLIENT_APP_ID. Exiting." | tee >&2
-  exit 1
-fi
-
-## =========================================================================================
 ## Functions
 ## =========================================================================================
 dump_env() {
@@ -76,8 +65,9 @@ version_to_int() {
 
 get_proton_flavor() {
   local IFS=:
-  for path in $STEAM_COMPAT_TOOL_PATHS; do 
-    [[ "$path" == "$STEAM_BASE_FOLDER"/compatibilitytools.d/* ]] && echo "$path" && break
+  for path in $PATH; do 
+    [[ "$path" == "$STEAM_BASE_FOLDER"/compatibilitytools.d/* ]] && echo "$path" | grep -oE "${STEAM_BASE_FOLDER}/compatibilitytools.d/[^/]+" && break
+    
   done
 }
 
@@ -87,6 +77,18 @@ get_rsi_setup_versions() {
   newInstallerVersion=$(echo ${newInstallerLink} | grep -oE "[0-9]\.[0-9]\.[0-9]" )
   newInstallerExe=${newInstallerLink##*/}
 }
+
+## =========================================================================================
+##  Load custom environment
+## =========================================================================================
+[ -f ${wdir}/sc-launcher.env ] && source ${wdir}/sc-launcher.env
+
+if [[ "${SteamClientLaunch}" != "1" ]] && [ -z "${STEAM_CLIENT_APP_ID}" ]; then
+  dump_env
+  echo "ERROR: Could not determine STEAM_CLIENT_APP_ID. Exiting." | tee >&2
+  exit 1
+fi
+
 
 ## =========================================================================================
 ## Steam libs and Proton prefix location
