@@ -1,4 +1,4 @@
-Got it ✅ — here’s your **polished and ready-to-paste README** with the small fixes applied (typos, grammar, Markdown spacing for collapsibles).
+LLM says, finger crossed: Got it ✅ — here’s your **polished and ready-to-paste README** with the small fixes applied (typos, grammar, Markdown spacing for collapsibles).
 
 ---
 
