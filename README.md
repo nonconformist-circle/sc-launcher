@@ -90,20 +90,20 @@ cp sc-launcher.sh ../sc-launcher.sh
 In Steam:
 **Add a Game → Add a Non-Steam Game → Browse** → select `sc-launcher.sh`.
 
-### 4. Configure Shortcut
+### 4. Configure added game
 
-* Rename it (e.g., *Star Citizen Launcher*).
-* In **Properties → Compatibility**, enable:
+* in **Shortcut**
+  * Rename it (e.g., *Star Citizen Launcher*).
+* In **Properties → Compatibility**
+  * enable `Force the use of a specific Steam Play compatibility tool`
+  * Select your Proton build (GE or CachyOS).
 
-  > Force the use of a specific Steam Play compatibility tool
-  > Select your Proton build (GE or CachyOS).
-
-Pictured example:
+**Pictured example:**
 
 ![Steam shortcut properties window](media/steam-client-game-properties-shortcut.png)
 ![Steam compatibility settings](media/steam-client-game-properties-compat.png)
 
-You can also add logos/backgrounds from the [RSI Fan Kit](https://robertsspaceindustries.com/en/fankit).
+[Hint] You can also add logos/backgrounds from the [RSI Fan Kit](https://robertsspaceindustries.com/en/fankit).
 
 ### 5. Launch Installer
 
