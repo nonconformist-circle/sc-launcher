@@ -112,14 +112,10 @@ In Steam:
 * Run the installer and choose the installation path:
 
   * Default is fine (`C:\Program Files\Roberts Space Industries\RSI Launcher` on your host machine results in `$HOME/Games/Star-Citizen/pfx/drive_c/Program\ Files/Roberts\ Space\ Industries/RSI Launcher`).
+    * ![RSI installer window](media/launcher-install.png)
   * Alternatively, if you already have the game installed somewhere, choose `Z:\` → navigate to your game folder → create a `Roberts Space Industries` subfolder if it doesn’t exist, parallel to the `StarCitizen` folder (which is the default structure).
-
-    * If you do this, remember to change the Default Library path in RSI Launcher via **Settings → Storage**. Otherwise, the launcher will install the game in `C:\Program Files\Roberts Space Industries\StarCitizen` by default (i.e., `$HOME/Games/Star-Citizen/pfx/drive_c/Program\ Files/Roberts\ Space\ Industries/StarCitizen`).
-
-Example pictures:
-
-![RSI installer window](media/launcher-install.png)
-![RSI install path dialog](media/launcher-install-path.png)
+    * **[IMPORTNANT]** If you do this, remember to change the Default Library path in RSI Launcher via **Settings → Storage**. Otherwise, the launcher will install the game in `C:\Program Files\Roberts Space Industries\StarCitizen` by default (i.e., `$HOME/Games/Star-Citizen/pfx/drive_c/Program\ Files/Roberts\ Space\ Industries/StarCitizen`).
+    * ![RSI install path dialog](media/launcher-install-path.png)
 
 ### 6. Final Setup
 
