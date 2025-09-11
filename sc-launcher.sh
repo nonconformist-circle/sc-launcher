@@ -111,7 +111,7 @@ check_and_download_rsi_setup() {
   # check version available on RSI webside
   newInstallerLink=$(curl "${CURL_OPTS[@]}" -s https://robertsspaceindustries.com/en/download | grep downloadLink | grep -oE 'https://install.robertsspaceindustries.com[^\"]+')
   newInstallerVersion=$(echo ${newInstallerLink} | grep -oE "[0-9]\.[0-9]\.[0-9]" )
-  local newInstallerExe=${newInstallerLink##*/}get_rsi_setup_versions
+  local newInstallerExe=${newInstallerLink##*/}
   # compare versions  
   if [ $(version_to_int "${newInstallerVersion}") -gt $(version_to_int "${currentInstallerVersion}") ]; then
     # prepare message context
