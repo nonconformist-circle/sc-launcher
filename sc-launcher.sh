@@ -110,7 +110,7 @@ check_and_download_rsi_setup() {
     || currentInstallerVersion="0.0.0"
   # check version available on RSI webside
   newInstallerLink=$(curl "${CURL_OPTS[@]}" -s https://robertsspaceindustries.com/en/download | grep downloadLink | grep -oE 'https://install.robertsspaceindustries.com[^\"]+')
-  newInstallerVersion=$(echo ${newInstallerLink} | grep -oE "[0-9]\.[0-9]\.[0-9]" )
+  newInstallerVersion=$(echo ${newInstallerLink} | grep -oE "[0-9]+\.[0-9]+\.[0-9]+" )
   local newInstallerExe=${newInstallerLink##*/}
   # compare versions  
   if [ $(version_to_int "${newInstallerVersion}") -gt $(version_to_int "${currentInstallerVersion}") ]; then
@@ -186,9 +186,9 @@ fi
 [[ ! "${@}" =~ noupgrade ]] && check_and_download_rsi_setup || log_info "Installation/Updades prohobitet by parameter 'noupgrade'."
 
 if [ ! -z "${RSI_INSTALLER_PATH}" ]; then
-  APP_PATH=${RSI_INSTALLER_PATH}
+  APP_PATH="${RSI_INSTALLER_PATH}"
 elif [ ! -z "${STEAM_COMPAT_DATA_PATH}" ]; then
-  APP_PATH=$(find ${STEAM_COMPAT_DATA_PATH} -type f -name "${RSI_LAUNCHER}")
+  APP_PATH=$(find "${STEAM_COMPAT_DATA_PATH}" -type f -name "${RSI_LAUNCHER}")
 fi
 
 if [ -z "${APP_PATH}" ]; then
@@ -201,6 +201,9 @@ fi
 ## =========================================================================================
 [ ! -z "${CUSTOM_LOG_FILE}" ] && handle_custom_log_file
 mkdir -p ${HOME}/.config/protonfixes ${STEAM_COMPAT_DATA_PATH}
+
+# Windows ACL don't work with Proton, so we have to install the game files in Z:/../here
+mkdir -p ${wdir}/gamefiles/StarCitizen/{LIVE,PTU,HOTFIX,TECH_PREVIEW,TECHPREVIEW}
 
 ## =========================================================================================
 ## Get Proton flavor and version set in Steam
