@@ -14,20 +14,14 @@ wdir=$(dirname $(readlink -f "$0"))
 ## =========================================================================================
 ## Default Settings
 ## =========================================================================================
-USE_STEAM_RUNTIME_WHEN_OUTSIDE_STEAM=${USE_STEAM_RUNTIME_WHEN_OUTSIDE_STEAM:-false}
-STEAM_CLIENT_APP_ID=${STEAM_CLIENT_APP_ID:-"${STEAM_COMPAT_DATA_PATH##*/}"}
 RSI_LAUNCHER="RSI Launcher.exe"
 STEAM_ZENITY=${STEAM_ZENITY:-"/usr/bin/zenity"}
 CURL_OPTS=(-fL --retry 5 --retry-delay 2 --connect-timeout 10 --continue-at -)
 DUMP_STEAM_EVNIRONMENT=false
+PATH_GAME_SETUP_GRAPHICS_API=true
 
 ## Vulkan / runtime hardening
 USE_VULKAN=${USE_VULKAN:-false}
-VULKAN_PREFLIGHT=${VULKAN_PREFLIGHT:-"${USE_VULKAN}"}
-
-## Optional debug (off by default)
-ENABLE_VULKAN_DEBUG=${ENABLE_VULKAN_DEBUG:-false}   # sets VK_LOADER_DEBUG / WINEDEBUG
-ENABLE_PROTON_LOG=${ENABLE_PROTON_LOG:-false}
 
 CUSTOM_LOG_FILE_TEE="/dev/null"
 APP_PATH_ARGS=""
@@ -44,11 +38,13 @@ on_err() {
 trap 'on_err "$LINENO" "$BASH_COMMAND" "${FUNCNAME[0]:-MAIN}"' ERR
 
 raise_error() {
+  local errorMsg="${*}"
   set +e
   trap - ERR
   dump_env || true
-  echo -e "ERROR: $*" >&2
-  [ -n "${CUSTOM_LOG_FILE_TEE}" ] && echo -e "ERROR: $*" | tee ${CUSTOM_LOG_FILE_TEE} >&2 || true
+  echo -e "ERROR: ${errorMsg}" >&2
+  [ -n "${CUSTOM_LOG_FILE_TEE}" ] && echo -e "ERROR: ${errorMsg}" | tee ${CUSTOM_LOG_FILE_TEE} >&2 || true
+  "${STEAM_ZENITY}" --error --title="sc-launcher.sh" --text="${errorMsg}"
   exit 1
 }
 
@@ -57,6 +53,7 @@ abort_info() {
   trap - ERR
   echo -e "INFO: $*" | tee ${CUSTOM_LOG_FILE_TEE} >&2
   dump_env || true
+  "${STEAM_ZENITY}" --info --title="sc-launcher.sh" --text="${errorMsg}"
   exit 1
 }
 
@@ -70,17 +67,22 @@ RSI_INSTALLER_PATH="${RSI_INSTALLER_PATH}"
 RSI_LAUNCHER="${RSI_LAUNCHER}"
 
 # Steam environment
-USE_STEAM_RUNTIME_WHEN_OUTSIDE_STEAM=${USE_STEAM_RUNTIME_WHEN_OUTSIDE_STEAM}
-STEAM_CLIENT_APP_ID=${STEAM_CLIENT_APP_ID}
+## Local
+STEAM_BASE_FOLDER=${STEAM_BASE_FOLDER}
 STEAM_COMPAT_DATA_PATH=${STEAM_COMPAT_DATA_PATH}
-STEAM_COMPAT_CLIENT_INSTALL_PATH=${STEAM_COMPAT_CLIENT_INSTALL_PATH}
-STEAM_COMPAT_TRANSCODED_MEDIA_PATH=${STEAM_COMPAT_TRANSCODED_MEDIA_PATH}
+## Exported
+$(env | grep -E '^STEAM_.*$' | sort -h)
 
 # Proton environment
+## Local
+STEAM_RUNNNER=${STEAM_RUNNNER}
 PROTON_PATH=${PROTON_PATH}
 PROTON_PREFIX_VERSION=${PROTON_PREFIX_VERSION}
 PROTON_VERSION=${PROTON_VERSION}
 WINEPREFIX=${WINEPREFIX}
+## Exported
+$(env | grep -E '^PROTON.*$' | sort -h)
+$(env | grep -E '^WINE.*$' | sort -h)
 
 # App
 APP_PATH=${APP_PATH}
@@ -95,11 +97,12 @@ newInstallerLink=${newInstallerLink}
 newInstallerVersion=${newInstallerVersion}
 
 # VULKAN
+## Local
 USE_VULKAN=${USE_VULKAN}
-#::(env | grep -E '^VK_.*$')
-$(env | grep -E '^VK_.*$')
-#::(env | grep -E '_VK_')
-$(env | grep -E '_VK_')
+VULKAN_PREFLIGHT=${VULKAN_PREFLIGHT}
+## Exported
+$(env | grep -E '^VK_.*$' | sort -h)
+$(env | grep -E '_VK_' | sort -h)
 
 # [ ------------------- EOF DUMP ------------------- ]
 " | tee ${CUSTOM_LOG_FILE_TEE} >&2
@@ -163,34 +166,6 @@ handle_custom_log_file() {
   CUSTOM_LOG_FILE_TEE="-a ${CUSTOM_LOG_FILE}"
 }
 
-find_steam_runtime_run() {
-  local candidates=(
-    # Common on "classic" Steam installs
-    "${STEAM_BASE_FOLDER}/ubuntu12_32/steam-runtime/run.sh"
-    "${STEAM_BASE_FOLDER}/ubuntu12_64/steam-runtime/run.sh"
-
-    # Steam Linux Runtime (pressure-vessel) variants
-    "${STEAM_BASE_FOLDER}/steamapps/common/SteamLinuxRuntime_sniper/run"
-    "${STEAM_BASE_FOLDER}/steamapps/common/SteamLinuxRuntime_soldier/run"
-    "${STEAM_BASE_FOLDER}/steamapps/common/SteamLinuxRuntime_heavy/run"
-
-    # Fallbacks from legacy symlinks
-    "${HOME}/.steam/root/ubuntu12_32/steam-runtime/run.sh"
-    "${HOME}/.steam/root/steamapps/common/SteamLinuxRuntime_sniper/run"
-    "${HOME}/.steam/root/steamapps/common/SteamLinuxRuntime_soldier/run"
-  )
-
-  local c
-  for c in "${candidates[@]}"; do
-    if [ -x "$c" ]; then
-      echo "$c"
-      return 0
-    fi
-  done
-
-  return 1
-}
-
 vulkan_preflight() {
   info "Vulkan preflight: host visibility check"
 
@@ -211,6 +186,10 @@ vulkan_preflight() {
 }
 
 patch_game_config() {
+  if ! ${PATH_GAME_SETUP_GRAPHICS_API}; then
+    info "GraphicsSettings pathing disabled"
+    return 0
+  fi
   local useVulkan=${1:-true}
   ${useVulkan} && {
     swA=0
@@ -225,59 +204,49 @@ patch_game_config() {
   find "${STEAM_COMPAT_DATA_PATH}/pfx/drive_c/users/steamuser/AppData/Local/star citizen/" -type f -name 'GraphicsSettings.json' | xargs -I{} sed -i'.bck' 's#"GraphicsRenderer": '${swA}'#"GraphicsRenderer": '${swB}'#g' "{}"
 }
 
+
 ## =========================================================================================
 ##  Load custom environment
 ## =========================================================================================
 [ -f "${wdir}/sc-launcher.env" ] && source "${wdir}/sc-launcher.env"
 
-## =========================================================================================
-##  Load steam environment
-## =========================================================================================
-if [ -z "${STEAM_BASE_FOLDER}" ]; then
-  if [ -d "${HOME}/.steam/root" ]; then
-    export STEAM_BASE_FOLDER="${HOME}/.steam/root"
-  elif [ -d "${HOME}/.local/share/Steam" ]; then
-    export STEAM_BASE_FOLDER="${HOME}/.local/share/Steam"
-  elif [ -d "${HOME}/.steam/debian-installation" ]; then
-    export STEAM_BASE_FOLDER="${HOME}/.steam/debian-installation"
-  else
-    export STEAM_BASE_FOLDER="${HOME}/.steam/root"  # best guess; will be validated later
-  fi
-else
-  export STEAM_BASE_FOLDER="${STEAM_BASE_FOLDER}"
-fi
-export STEAM_COMPAT_CLIENT_INSTALL_PATH=${STEAM_BASE_FOLDER}
-export STEAM_COMPAT_DATA_PATH=${STEAM_COMPAT_DATA_PATH:-"${STEAM_COMPAT_CLIENT_INSTALL_PATH}/steamapps/compatdata/${STEAM_CLIENT_APP_ID}"}
-export WINEPREFIX="${STEAM_COMPAT_DATA_PATH}/pfx"
-[ ${STEAM_COMPAT_PROTON:-0} -eq 0 ] && isSteamScopeMissing=true || isSteamScopeMissing=false
+VULKAN_PREFLIGHT=${VULKAN_PREFLIGHT:-"${USE_VULKAN}"}
 
 ## =========================================================================================
-## Check steam environment
+## Ensure steam environment
 ## =========================================================================================
-if [ -z "${STEAM_CLIENT_APP_ID}" ]; then
-  ${isSteamScopeMissing} \
-  && errorMsg="Could not determine STEAM_CLIENT_APP_ID, you" \
-  || errorMsg="Could not determine STEAM_CLIENT_APP_ID. Exiting."
-  raise_error "${errorMsg}"
-fi
-
 if [ ! -d  "${STEAM_BASE_FOLDER}" ]; then
-  ${isSteamScopeMissing} \
-  && errorMsg="Expected STEAM_BASE_FOLDER does not exists at ${STEAM_BASE_FOLDER},
-you run this script form outside steam scope, make sure that STEAM_BASE_FOLDER in sc-launcher.env, usually ~/.steam/debian-installation" \
-  || errorMsg="Expected STEAM_BASE_FOLDER does not exists at ${STEAM_BASE_FOLDER}, check your stean installation" 
+  errorMsg="Expected STEAM_BASE_FOLDER does not exists at ${STEAM_BASE_FOLDER}, check your stean installation" 
   raise_error "${errorMsg}"
 fi
 
 if [ -z "${STEAM_COMPAT_DATA_PATH}" ]; then
-  ${isSteamScopeMissing} \
-  && errorMsg="Steam env STEAM_COMPAT_DATA_PATH is empty. You are run this script outside steam scope, make sure that:
-1. you deficne STEAM_COMPAT_DATA_PATH in sc-launcher.env,
-2. you are aware this migh end up in two differen prefix location. The steam default is like ~/.steam/debian-installation/steamapps/compatdata/<STEAM_CLIENT_APP_ID>,
-3. you know what you are doing." \
-  || errorMsg="Steam env STEAM_COMPAT_DATA_PATH is empty, that should not happen. Check your Steam installation"
+  errorMsg="Steam env STEAM_COMPAT_DATA_PATH is empty, that should not happen. Check your Steam installation"
   raise_error "${errorMsg}"
 fi
+
+export WINEPREFIX="${STEAM_COMPAT_DATA_PATH}/pfx"
+
+## =========================================================================================
+## Get Proton flavor and version set in Steam
+## =========================================================================================
+PROTON_PATH=${PROTON_FLAVOR:-"$(get_proton_flavor)"}/proton
+if [ ! -f "${PROTON_PATH}" ]; then
+  errorMsg="Could not determine PROTON_PATH. Make sure Proton GE, or Proton CachyOS is installed and compatibility enforced in steam or add env PROTON_FLAVOR in sc-launcher.env pointing to ${STEAM_BASE_FOLDER}/compatibilitytools.d/Proton-runner-dir-of-your-choise"
+  raise_error "${errorMsg}"
+fi
+
+## =========================================================================================
+## Ensure log and paths
+## =========================================================================================
+[ ! -z "${CUSTOM_LOG_FILE}" ] && handle_custom_log_file
+mkdir -p "${HOME}/.config/protonfixes" "${STEAM_COMPAT_DATA_PATH}"
+
+# Windows ACL don't work with Proton, so we have to install the game files in Z:/../here
+mkdir -p "${wdir}/gamefiles/StarCitizen/"{LIVE,PTU,HOTFIX,TECH_PREVIEW,TECHPREVIEW}
+
+# Clean up potential EasyAntiCheat cache causing game to abort claiming a login issue after switching proton flavor
+[ -d "${STEAM_COMPAT_DATA_PATH}/pfx/drive_c/users/steamuser/AppData/Roaming/EasyAntiCheat" ]  && rm -rf ${STEAM_COMPAT_DATA_PATH}/pfx/drive_c/users/steamuser/AppData/Roaming/EasyAntiCheat/*
 
 ## =========================================================================================
 ## Install/Update the RSI Launcher Setup.exe
@@ -296,57 +265,12 @@ Need RSI installer file path as env RSI_INSTALLER_PATH in sc-launcher.env if you
 fi 
 
 ## =========================================================================================
-## Ensure log and paths
-## =========================================================================================
-[ ! -z "${CUSTOM_LOG_FILE}" ] && handle_custom_log_file
-mkdir -p "${HOME}/.config/protonfixes" "${STEAM_COMPAT_DATA_PATH}"
-
-# Windows ACL don't work with Proton, so we have to install the game files in Z:/../here
-mkdir -p "${wdir}/gamefiles/StarCitizen/"{LIVE,PTU,HOTFIX,TECH_PREVIEW,TECHPREVIEW}
-
-# Clean up potential EasyAntiCheat cache causing game to abort claiming a login issue
-[ -d "${STEAM_COMPAT_DATA_PATH}/pfx/drive_c/users/steamuser/AppData/Roaming/EasyAntiCheat" ]  && {
-  info "cleaning up cache in ${STEAM_COMPAT_DATA_PATH}/pfx/drive_c/users/steamuser/AppData/Roaming/EasyAntiCheat/"
-  rm -rf ${STEAM_COMPAT_DATA_PATH}/pfx/drive_c/users/steamuser/AppData/Roaming/EasyAntiCheat/*
-}
-
-## =========================================================================================
-## Get Proton flavor and version set in Steam
-## =========================================================================================
-PROTON_PATH=${PROTON_FLAVOR:-"$(get_proton_flavor)"}/proton
-if [ ! -f "${PROTON_PATH}" ]; then
-  raise_error "Could not determine PROTON_PATH. If you run the script from cli make sure to add env PROTON_FLAVOR in sc-launcher.env pointing to ${STEAM_BASE_FOLDER}/compatibilitytools.d/Proton-runner-dir-of-your-choise"
-fi
-
-## =========================================================================================
-## Ensure proton envs if needed
-## =========================================================================================
-if declare -F proton_envs > /dev/null; then
-  PROTON_PREFIX_VERSION=$(grep -roE 'CURRENT_PREFIX_VERSION="[^"]+"' "${PROTON_PATH}" | grep -oE '[^"]+' | tail -n1)
-  PROTON_VERSION=$(echo "${PROTON_PREFIX_VERSION}" | grep -oE '[0-9]+' | head -n1)
-  proton_envs
-fi
-
-## =========================================================================================
 ## Launch game
 ## =========================================================================================
-
 patch_game_config ${USE_VULKAN}
-[ "${VULKAN_PREFLIGHT}" = "true" ] && vulkan_preflight || true
+${VULKAN_PREFLIGHT} && vulkan_preflight || true
 
 dump_env
+info "Launching ${PROTON_PATH} run ${APP_PATH} ${APP_PATH_ARGS}"
+exec "${PROTON_PATH}" run "${APP_PATH}" ${APP_PATH_ARGS}
 
-# If not running in Steam scope, optionally wrap with a Steam runtime runner to
-# improve consistency (32-bit libs, loader behavior, etc.).
-if ${USE_STEAM_RUNTIME_WHEN_OUTSIDE_STEAM} && ${isSteamScopeMissing}; then
-  SRUN="$(find_steam_runtime_run || true)"
-  if [ -n "${SRUN}" ]; then
-    info "Outside Steam scope; wrapping Proton with Steam runtime runner: ${SRUN}"
-    exec "${SRUN}" -- "${PROTON_PATH}" run "${APP_PATH}" ${APP_PATH_ARGS}
-  else
-    warn "Outside Steam scope and no Steam runtime runner found; launching Proton directly."
-    exec "${PROTON_PATH}" run "${APP_PATH}" ${APP_PATH_ARGS}
-  fi
-else
-  exec "${PROTON_PATH}" run "${APP_PATH}" ${APP_PATH_ARGS}
-fi
