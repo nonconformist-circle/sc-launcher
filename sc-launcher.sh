@@ -18,10 +18,10 @@ RSI_LAUNCHER="RSI Launcher.exe"
 STEAM_ZENITY=${STEAM_ZENITY:-"/usr/bin/zenity"}
 CURL_OPTS=(-fL --retry 5 --retry-delay 2 --connect-timeout 10 --continue-at -)
 DUMP_STEAM_EVNIRONMENT=false
-PATH_GAME_SETUP_GRAPHICS_API=true
+PATCH_GAME_SETUP_GRAPHICS_API=true
 
 ## Vulkan / runtime hardening
-USE_VULKAN=${USE_VULKAN:-false}
+USE_VULKAN=${USE_VULKAN:-true}
 
 CUSTOM_LOG_FILE_TEE="/dev/null"
 APP_PATH_ARGS=""
@@ -186,8 +186,8 @@ vulkan_preflight() {
 }
 
 patch_game_config() {
-  if ! ${PATH_GAME_SETUP_GRAPHICS_API}; then
-    info "GraphicsSettings pathing disabled"
+  if ! ${PATCH_GAME_SETUP_GRAPHICS_API}; then
+    info "GraphicsSettings patching disabled"
     return 0
   fi
   local useVulkan=${1:-true}
@@ -203,6 +203,36 @@ patch_game_config() {
   }
   find "${STEAM_COMPAT_DATA_PATH}/pfx/drive_c/users/steamuser/AppData/Local/star citizen/" -type f -name 'GraphicsSettings.json' | xargs -I{} sed -i'.bck' 's#"GraphicsRenderer": '${swA}'#"GraphicsRenderer": '${swB}'#g' "{}"
 }
+
+##=========================================================================================
+## prefix patches
+##=========================================================================================
+## patch for MSVCP140.dll issue on Star Citizen v4.7 and vulkan black screen issues
+## see sc-launcher.env -> apply_vcrun2022_workaround
+apply_vcrun2022_workaround() {
+  local prefix="${STEAM_COMPAT_DATA_PATH}/pfx"
+  local wine_bin="${PROTON_PATH}/files/bin/wine"
+
+  [ -d "${prefix}" ] || return 1
+  [ -n "${wine_bin}" ] || return 1
+  [ -x "${wine_bin}" ] || return 1
+
+  if "${wine_bin}" reg query 'HKCU\Software\Wine\DllOverrides' /v msvcp140 2>/dev/null | grep -q 'native,builtin'; then
+    echo "vcrun2022/native MSVC runtime already present, skipping"
+    return 0
+  fi
+
+  env WINEPREFIX="${prefix}" WINE="${wine_bin}" winetricks -q vcrun2022
+}
+
+## =========================================================================================
+## Get Proton flavor and version set in Steam
+## =========================================================================================
+PROTON_PATH=${PROTON_FLAVOR:-"$(get_proton_flavor)"}/proton
+if [ ! -f "${PROTON_PATH}" ]; then
+  errorMsg="Could not determine PROTON_PATH. Make sure Proton GE, or Proton CachyOS is installed and compatibility enforced in steam or add env PROTON_FLAVOR in sc-launcher.env pointing to ${STEAM_BASE_FOLDER}/compatibilitytools.d/Proton-runner-dir-of-your-choise"
+  raise_error "${errorMsg}"
+fi
 
 
 ## =========================================================================================
@@ -227,14 +257,6 @@ fi
 
 export WINEPREFIX="${STEAM_COMPAT_DATA_PATH}/pfx"
 
-## =========================================================================================
-## Get Proton flavor and version set in Steam
-## =========================================================================================
-PROTON_PATH=${PROTON_FLAVOR:-"$(get_proton_flavor)"}/proton
-if [ ! -f "${PROTON_PATH}" ]; then
-  errorMsg="Could not determine PROTON_PATH. Make sure Proton GE, or Proton CachyOS is installed and compatibility enforced in steam or add env PROTON_FLAVOR in sc-launcher.env pointing to ${STEAM_BASE_FOLDER}/compatibilitytools.d/Proton-runner-dir-of-your-choise"
-  raise_error "${errorMsg}"
-fi
 
 ## =========================================================================================
 ## Ensure log and paths

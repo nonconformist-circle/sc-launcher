@@ -65,6 +65,7 @@ Use **ProtonUp-Qt** or **ProtonPlus** to download and update your preferred Prot
 
   * This directory will contain the Proton prefix (aka a Wine “prefix” environment) in which Star Citizen will run.
   * It will also contain `RSI Launcher-Setup-X.X.X.exe` files.
+  * Use a SSD disk at minimum, NVMe is recomended. 
 
 * On the command line:
 
@@ -82,6 +83,7 @@ touch sc-launcher.env   # optional, for custom Proton variables
 ```bash
 cd $HOME/Games/Star-Citizen/sc-launcher/
 git pull
+git diff sc-launcher.sh ../sc-launcher.sh
 cp sc-launcher.sh ../sc-launcher.sh
 ```
 
