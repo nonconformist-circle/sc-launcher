@@ -211,7 +211,7 @@ patch_game_config() {
 ## see sc-launcher.env -> apply_vcrun2022_workaround
 apply_vcrun2022_workaround() {
   local prefix="${STEAM_COMPAT_DATA_PATH}/pfx"
-  local wine_bin="${PROTON_PATH}/files/bin/wine"
+  local wine_bin="$(dirname "${PROTON_PATH}")/files/bin/wine"
 
   [ -d "${prefix}" ] || return 1
   [ -n "${wine_bin}" ] || return 1
