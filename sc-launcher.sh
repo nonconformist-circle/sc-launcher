@@ -1,9 +1,6 @@
 #!/bin/bash
 ## =========================================================================================
 ## 
-## * This script works with ProtonQT/ProtonUP, and does not always work with ProtonPlus 
-## because ProtonPlus does not follow Steam naming conventions that this script relies on.
-##
 ## * For custom setting place a file named sc-launcher.env in same directory as this script.
 ## see sc-launcher.env.template
 ##
