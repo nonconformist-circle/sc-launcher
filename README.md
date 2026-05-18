@@ -200,6 +200,11 @@ The `sc-launcher.sh` produces minimal log output. It dumps certain environment v
   * Switch the rendere API using `USE_VULKAN=`
   * check "prefix patches" block
 
+### 🕹️ Mouse / Keyboard issues
+
+* Use `input-remapper` app to remap keys and mouse (remap axes to Output Type `Analog Axis`, Target `mouse`) if 
+  * Using Gnome you encounter issues with ingame mosue cursor.
+  * Using KDE some keys, like Right Alt does not work
 
 ### 🕹️ Stutter during gameplay
 
