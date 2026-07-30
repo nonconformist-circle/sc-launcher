@@ -295,7 +295,7 @@ apply_powershell_cmd_patch() {
     mkdir -p "${ps_dir_sys32}"
     if ! cmp -s "${cmd_sys32}" "${ps_exe_sys32}"; then
       cp -f "${cmd_sys32}" "${ps_exe_sys32}"
-      echo "[sc-launcher] Replaced system32 powershell.exe with cmd.exe"
+      info "Replaced system32 powershell.exe with cmd.exe"
     fi
   fi
 
@@ -308,7 +308,7 @@ apply_powershell_cmd_patch() {
     mkdir -p "${ps_dir_wow64}"
     if ! cmp -s "${cmd_wow64}" "${ps_exe_wow64}"; then
       cp -f "${cmd_wow64}" "${ps_exe_wow64}"
-      echo "[sc-launcher] Replaced syswow64 powershell.exe with cmd.exe"
+      info "Replaced syswow64 powershell.exe with cmd.exe"
     fi
   fi
 }
